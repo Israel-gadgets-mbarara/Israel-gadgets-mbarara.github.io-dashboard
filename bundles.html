@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bundle Deals – Israel Gadgets</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root{
+            --brand-red: #e41e2b;
+            --brand-blue: #1a5fb4;
+            --brand-yellow: #f5a524;
+            --brand-white: #ffffff;
+            --brand-black: #000000;
+            --success:#26a269;
+            --danger:#c01c28;
+            --warning:#f5a524;
+            --dark:#241f31;
+            --sale:#c64600;
+            --electric:#9141ac;
+            --shadow-sm: 0 4px 12px rgba(0,0,0,0.08);
+            --shadow-hover: 0 8px 20px rgba(0,0,0,0.12);
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            background: #f0f4f8;
+            color: #111;
+            line-height: 1.6;
+            padding: 30px 20px;
+        }
+        .section-title {
+            color: var(--brand-red);
+            margin-bottom: 25px;
+            padding-bottom: 5px;
+            border-bottom: 3px solid var(--brand-blue);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+        .btn-sm {
+            padding: 10px 20px;
+            font-size: 14px;
+            border-radius: 40px;
+            border: none;
+            background: linear-gradient(145deg, var(--brand-red), #b0121e);
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 10px rgba(228,30,43,0.3);
+        }
+        .btn-sm:hover {
+            background: linear-gradient(145deg, #b0121e, var(--brand-red));
+            transform: translateY(-2px);
+        }
+        .btn-danger {
+            background: #6b2b2b;
+            box-shadow: none;
+        }
+        .btn-danger:hover {
+            background: #4e1e1e;
+        }
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: 20px;
+            background: white;
+            box-shadow: var(--shadow-sm);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        th {
+            background: linear-gradient(145deg, var(--brand-red), #b81422);
+            color: white;
+            padding: 16px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        td {
+            padding: 14px 12px;
+            border-bottom: 1px solid #edf2f7;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        tr:hover td {
+            background: #fafdff;
+        }
+        .form-container {
+            background: white;
+            padding: 35px;
+            border-radius: 28px;
+            border: none;
+            max-width: 900px;
+            box-shadow: var(--shadow-sm);
+        }
+        .form-group {
+            margin-bottom: 22px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--brand-blue);
+            font-size: 0.95rem;
+        }
+        .form-control {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #e2e8f0;
+            border-radius: 20px;
+            font-size: 15px;
+            transition: 0.2s;
+            background: white;
+        }
+        .form-control:focus {
+            border-color: var(--brand-red);
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(228,30,43,0.15);
+        }
+        .toast {
+            position: fixed;
+            top: 25px;
+            right: 25px;
+            background: linear-gradient(145deg, var(--brand-red), #b0121e);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            border: none;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            z-index: 9999;
+            animation: slideIn 0.25s ease-out;
+            font-weight: 500;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(120%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .text-center { text-align: center; }
+        .action-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .bundle-item-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        .bundle-item-row input[type="text"] { flex: 2; min-width: 180px; }
+        .bundle-item-row input[type="number"] { width: 120px; }
+        .bundle-item-row .btn-remove-item {
+            background: #c01c28;
+            color: white;
+            border: none;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-add-row {
+            background: var(--brand-blue);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="content-area">
+            <div class="text-center" style="padding: 50px;">
+                <i class="fas fa-spinner fa-spin fa-3x" style="color: var(--brand-red);"></i>
+                <p style="margin-top: 20px;">Loading bundles...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== SUPABASE INIT ==========
+        const SUPABASE_URL = 'https://xljtstvujqhlkqpcbtvm.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhsanRzdHZ1anFobGtxcGNidHZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMDkwNDMsImV4cCI6MjA4NjU4NTA0M30.EIOVRbym8pOa7zNFp_wyqqfSF5_H0OZxit8nFRsJRBY';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // ========== HELPER ==========
+        function showMessage(msg, isError = false) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.style.background = isError ? 'var(--brand-red)' : 'linear-gradient(145deg, var(--brand-red), #b0121e)';
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // ========== BUNDLES MANAGEMENT ==========
+        async function renderBundlesSection() {
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `<div class="text-center"><i class="fas fa-spinner fa-spin fa-2x"></i> Loading bundles...</div>`;
+            const { data: bundles } = await supabaseClient.from('bundles').select('*').order('id');
+            let html = `
+                <div class="section-title">
+                    <span><i class="fas fa-gift"></i> Bundle Deals</span>
+                    <button onclick="showAddBundleForm()" class="btn-sm"><i class="fas fa-plus"></i> Add Bundle</button>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead><tr><th>Name</th><th>Total</th><th>Discounted</th><th>Save %</th><th>Items</th><th>Actions</th></tr></thead>
+                        <tbody>
+                            ${bundles?.map(b => `
+                                <tr>
+                                    <td>${b.name}</td>
+                                    <td>UGX ${b.total.toLocaleString()}</td>
+                                    <td>UGX ${b.discounted.toLocaleString()}</td>
+                                    <td>${b.save_percent || 0}%</td>
+                                    <td>${Array.isArray(b.items) ? b.items.length : 0} items</td>
+                                    <td class="action-group">
+                                        <button onclick="editBundle(${b.id})" class="btn-sm"><i class="fas fa-edit"></i></button>
+                                        <button onclick="deleteBundle(${b.id})" class="btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                            `).join('') || '<tr><td colspan="6">No bundles</td></tr>'}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            contentArea.innerHTML = html;
+        }
+
+        // Helper to add a new item row in bundle form
+        function addBundleItemRow(containerId, item = { name: '', price: 0, url: '' }) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            const row = document.createElement('div');
+            row.className = 'bundle-item-row';
+            row.innerHTML = `
+                <input type="text" placeholder="Product name" value="${(item.name || '').replace(/"/g, '&quot;')}" class="form-control" style="flex:2;" required>
+                <input type="number" placeholder="Price UGX" value="${item.price || 0}" class="form-control" style="width:120px;" required>
+                <input type="url" placeholder="Product URL (optional)" value="${item.url || ''}" class="form-control" style="flex:1.5;">
+                <button type="button" class="btn-remove-item" onclick="this.parentElement.remove()">✖</button>
+            `;
+            container.appendChild(row);
+        }
+
+        async function showAddBundleForm() {
+            const formHtml = `
+                <div class="form-container">
+                    <h3 style="color:var(--brand-red);">➕ Add Bundle</h3>
+                    <form onsubmit="saveBundle(event)">
+                        <div class="form-group">
+                            <label>Bundle Name *</label>
+                            <input type="text" name="name" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Total Original Price (UGX) *</label>
+                            <input type="number" name="total" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Discounted Price (UGX) *</label>
+                            <input type="number" name="discounted" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Save Percentage</label>
+                            <input type="number" name="save_percent" class="form-control" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Bundle Items *</label>
+                            <div id="bundle-items-container"></div>
+                            <button type="button" onclick="addBundleItemRow('bundle-items-container')" class="btn-add-row"><i class="fas fa-plus"></i> Add Item</button>
+                        </div>
+                        <div style="display:flex; gap:10px; margin-top:20px;">
+                            <button type="submit" class="btn-sm" style="background: var(--success);">💾 Save Bundle</button>
+                            <button type="button" onclick="renderBundlesSection()" class="btn-sm" style="background:#6c757d;">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            document.getElementById('content-area').innerHTML = formHtml;
+            // Add one empty row by default
+            addBundleItemRow('bundle-items-container');
+        }
+
+        async function editBundle(bundleId) {
+            const { data: bundle } = await supabaseClient.from('bundles').select('*').eq('id', bundleId).single();
+            if (!bundle) return;
+            
+            const formHtml = `
+                <div class="form-container">
+                    <h3 style="color:var(--brand-red);">✏️ Edit Bundle</h3>
+                    <form onsubmit="updateBundle(event, ${bundle.id})">
+                        <div class="form-group">
+                            <label>Bundle Name *</label>
+                            <input type="text" name="name" value="${bundle.name.replace(/"/g, '&quot;')}" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Total Original Price (UGX) *</label>
+                            <input type="number" name="total" value="${bundle.total}" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Discounted Price (UGX) *</label>
+                            <input type="number" name="discounted" value="${bundle.discounted}" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Save Percentage</label>
+                            <input type="number" name="save_percent" value="${bundle.save_percent || 0}" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Bundle Items *</label>
+                            <div id="bundle-items-container"></div>
+                            <button type="button" onclick="addBundleItemRow('bundle-items-container')" class="btn-add-row"><i class="fas fa-plus"></i> Add Item</button>
+                        </div>
+                        <div style="display:flex; gap:10px; margin-top:20px;">
+                            <button type="submit" class="btn-sm" style="background: var(--success);">✅ Update Bundle</button>
+                            <button type="button" onclick="renderBundlesSection()" class="btn-sm" style="background:#6c757d;">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            document.getElementById('content-area').innerHTML = formHtml;
+            
+            // Populate rows with existing items
+            const container = document.getElementById('bundle-items-container');
+            if (Array.isArray(bundle.items)) {
+                bundle.items.forEach(item => addBundleItemRow('bundle-items-container', item));
+            } else {
+                addBundleItemRow('bundle-items-container'); // fallback empty row
+            }
+        }
+
+        async function saveBundle(e) {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+            
+            // Gather items from rows
+            const container = document.getElementById('bundle-items-container');
+            const rows = container.querySelectorAll('.bundle-item-row');
+            const items = [];
+            for (let row of rows) {
+                const inputs = row.querySelectorAll('input');
+                const name = inputs[0].value.trim();
+                const price = parseFloat(inputs[1].value);
+                const url = inputs[2].value.trim() || null;
+                if (name && !isNaN(price)) {
+                    items.push({ name, price, url });
+                }
+            }
+            
+            if (items.length === 0) {
+                showMessage('Please add at least one item.', true);
+                return;
+            }
+            
+            const bundle = {
+                name: formData.get('name'),
+                total: parseInt(formData.get('total')),
+                discounted: parseInt(formData.get('discounted')),
+                save_percent: parseInt(formData.get('save_percent')) || null,
+                items: items
+            };
+            
+            const { error } = await supabaseClient.from('bundles').insert(bundle);
+            if (error) showMessage('Error: ' + error.message, true);
+            else { showMessage('Bundle added!'); renderBundlesSection(); }
+        }
+
+        async function updateBundle(e, id) {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+            
+            // Gather items from rows
+            const container = document.getElementById('bundle-items-container');
+            const rows = container.querySelectorAll('.bundle-item-row');
+            const items = [];
+            for (let row of rows) {
+                const inputs = row.querySelectorAll('input');
+                const name = inputs[0].value.trim();
+                const price = parseFloat(inputs[1].value);
+                const url = inputs[2].value.trim() || null;
+                if (name && !isNaN(price)) {
+                    items.push({ name, price, url });
+                }
+            }
+            
+            if (items.length === 0) {
+                showMessage('Please add at least one item.', true);
+                return;
+            }
+            
+            const bundle = {
+                name: formData.get('name'),
+                total: parseInt(formData.get('total')),
+                discounted: parseInt(formData.get('discounted')),
+                save_percent: parseInt(formData.get('save_percent')) || null,
+                items: items
+            };
+            
+            const { error } = await supabaseClient.from('bundles').update(bundle).eq('id', id);
+            if (error) showMessage('Error: ' + error.message, true);
+            else { showMessage('Bundle updated!'); renderBundlesSection(); }
+        }
+
+        async function deleteBundle(id) {
+            if (!confirm('Delete this bundle?')) return;
+            const { error } = await supabaseClient.from('bundles').delete().eq('id', id);
+            if (error) showMessage('Error: ' + error.message, true);
+            else { showMessage('Bundle deleted.'); renderBundlesSection(); }
+        }
+
+        // ========== ATTACH TO WINDOW ==========
+        window.renderBundlesSection = renderBundlesSection;
+        window.showAddBundleForm = showAddBundleForm;
+        window.editBundle = editBundle;
+        window.deleteBundle = deleteBundle;
+        window.saveBundle = saveBundle;
+        window.updateBundle = updateBundle;
+        window.addBundleItemRow = addBundleItemRow;
+
+        // ========== START ==========
+        renderBundlesSection();
+    </script>
+</body>
+</html>

@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orders Management – Israel Gadgets</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root{
+            --brand-red: #e41e2b;
+            --brand-blue: #1a5fb4;
+            --brand-yellow: #f5a524;
+            --brand-white: #ffffff;
+            --brand-black: #000000;
+            --success:#26a269;
+            --danger:#c01c28;
+            --warning:#f5a524;
+            --dark:#241f31;
+            --sale:#c64600;
+            --electric:#9141ac;
+            --shadow-sm: 0 4px 12px rgba(0,0,0,0.08);
+            --shadow-hover: 0 8px 20px rgba(0,0,0,0.12);
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            background: #f0f4f8;
+            color: #111;
+            line-height: 1.6;
+            padding: 30px 20px;
+        }
+        .section-title {
+            color: var(--brand-red);
+            margin-bottom: 2px;
+            padding-bottom: 2px;
+            border-bottom: 3px solid var(--brand-blue);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: 20px;
+            background: white;
+            box-shadow: var(--shadow-sm);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        th {
+            background: linear-gradient(145deg, var(--brand-red), #b81422);
+            color: white;
+            padding: 16px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        td {
+            padding: 14px 12px;
+            border-bottom: 1px solid #edf2f7;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        tr:hover td {
+            background: #fafdff;
+        }
+        .badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 40px;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+        .badge.pending { background: #fff3cd; color: #856404; }
+        .badge.confirmed { background: #d1ecf1; color: #0c5460; }
+        .badge.delivered { background: #d4edda; color: #155724; }
+        .badge.cancelled { background: #f8d7da; color: #721c24; }
+        .form-control {
+            width: 100%;
+            padding: 8px 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 20px;
+            font-size: 14px;
+            transition: 0.2s;
+            background: white;
+        }
+        .form-control:focus {
+            border-color: var(--brand-red);
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(228,30,43,0.15);
+        }
+        .toast {
+            position: fixed;
+            top: 25px;
+            right: 25px;
+            background: linear-gradient(145deg, var(--brand-red), #b0121e);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            border: none;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            z-index: 9999;
+            animation: slideIn 0.25s ease-out;
+            font-weight: 500;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(120%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .text-center { text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="content-area">
+            <div class="text-center" style="padding: 50px;">
+                <i class="fas fa-spinner fa-spin fa-3x" style="color: var(--brand-red);"></i>
+                <p style="margin-top: 20px;">Loading orders...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== SUPABASE INIT ==========
+        const SUPABASE_URL = 'https://xljtstvujqhlkqpcbtvm.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhsanRzdHZ1anFobGtxcGNidHZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMDkwNDMsImV4cCI6MjA4NjU4NTA0M30.EIOVRbym8pOa7zNFp_wyqqfSF5_H0OZxit8nFRsJRBY';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // ========== HELPER ==========
+        function showMessage(msg, isError = false) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.style.background = isError ? 'var(--brand-red)' : 'linear-gradient(145deg, var(--brand-red), #b0121e)';
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // ========== ORDERS MANAGEMENT ==========
+        async function renderOrdersSection() {
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `<div class="text-center"><i class="fas fa-spinner fa-spin fa-2x"></i> Loading orders...</div>`;
+
+            const { data: orders, error } = await supabaseClient
+                .from('orders')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                contentArea.innerHTML = `<div class="error-message">Error loading orders: ${error.message}</div>`;
+                return;
+            }
+
+            let html = `
+                <h2 class="section-title"><i class="fas fa-shopping-cart"></i> Manage Orders</h2>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Address</th>
+                                <th>Subtotal</th>
+                                <th>Shipping</th>
+                                <th>Discount</th>
+                                <th>Total</th>
+                                <th>Payment</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${orders?.map(o => `
+                                <tr>
+                                    <td>${o.order_id}</td>
+                                    <td>${o.customer_name}<br><small>${o.customer_phone || ''}</small></td>
+                                    <td>${o.customer_address || ''}</td>
+                                    <td>UGX ${o.subtotal?.toLocaleString()}</td>
+                                    <td>UGX ${o.shipping?.toLocaleString()}</td>
+                                    <td>UGX ${o.discount?.toLocaleString()}</td>
+                                    <td>UGX ${o.total?.toLocaleString()}</td>
+                                    <td>${o.payment_method}</td>
+                                    <td><span class="badge ${o.status}">${o.status}</span></td>
+                                    <td>${new Date(o.created_at).toLocaleDateString()}</td>
+                                    <td>
+                                        <select onchange="updateOrderStatus(${o.id}, this.value)" class="form-control" style="width:130px;">
+                                            <option value="pending" ${o.status === 'pending' ? 'selected' : ''}>Pending</option>
+                                            <option value="confirmed" ${o.status === 'confirmed' ? 'selected' : ''}>Confirmed</option>
+                                            <option value="delivered" ${o.status === 'delivered' ? 'selected' : ''}>Delivered</option>
+                                            <option value="cancelled" ${o.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                            `).join('') || '<tr><td colspan="11">No orders found</td></tr>'}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            contentArea.innerHTML = html;
+        }
+
+        async function updateOrderStatus(orderId, status) {
+            if (status === 'cancelled') {
+                if (!confirm('Are you sure you want to cancel and permanently delete this order?')) {
+                    return;
+                }
+                // Delete the order
+                const { error } = await supabaseClient.from('orders').delete().eq('id', orderId);
+                if (error) {
+                    showMessage('Error deleting order: ' + error.message, true);
+                } else {
+                    showMessage('Order cancelled and deleted.');
+                    renderOrdersSection();
+                }
+            } else {
+                // Normal status update
+                const { error } = await supabaseClient.from('orders').update({ status }).eq('id', orderId);
+                if (error) showMessage('Error updating status', true);
+                else { showMessage('Order status updated'); renderOrdersSection(); }
+            }
+        }
+
+        // ========== ATTACH TO WINDOW ==========
+        window.renderOrdersSection = renderOrdersSection;
+        window.updateOrderStatus = updateOrderStatus;
+
+        // ========== START ==========
+        renderOrdersSection();
+    </script>
+</body>
+</html>
